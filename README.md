@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tableau
 
-## Getting Started
+Tableau blanc numérique open source conçu pour l'enseignement.
 
-First, run the development server:
+Inspiré de Google Jamboard — simple, rapide, respectueux de la vie privée.
+
+## Fonctionnalités
+
+- ✏️ Dessin au crayon et au stylet (Pointer Events)
+- 🖍️ Surligneur semi-transparent
+- 🧽 Gomme
+- 📐 Formes : ligne, flèche, rectangle, cercle
+- 📝 Texte éditable
+- 📌 Notes autocollantes (4 couleurs)
+- 🖼️ Import d'images (PNG, JPEG, WebP)
+- 🔴 Pointeur laser pour présentation
+- 📄 Multi-pages avec miniatures
+- ↩️ Undo / Redo (Ctrl+Z / Ctrl+Y)
+- 💾 Sauvegarde locale (.jam)
+- 📂 Ouverture de fichiers sauvegardés
+- 📑 Export PDF (toutes les pages)
+- 🖼️ Export PNG (page courante)
+
+## Vie privée
+
+> Cette application ne nécessite aucun compte et n'envoie ni ne stocke le contenu des tableaux sur un serveur. Les sessions sont sauvegardées uniquement lorsque l'utilisateur choisit explicitement de télécharger un fichier.
+
+- Aucun compte utilisateur
+- Aucune base de données
+- Aucun cookie de suivi
+- Aucun analytics ou télémétrie
+- Données en mémoire uniquement
+
+## Choix technique : Fabric.js
+
+Fabric.js v6 a été choisi pour le canvas car il offre :
+- Dessin libre fluide (PencilBrush) avec support natif Pointer Events
+- Modèle objet complet (sélection, déplacement, redimensionnement)
+- Sérialisation JSON native (`toJSON` / `loadFromJSON`)
+- Support tactile et stylet intégré
+- Licence MIT, aucune API externe
+
+## Installation
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Déploiement Vercel
 
-## Learn More
+1. Forker le repo sur GitHub
+2. Connecter à Vercel
+3. Déployer — aucune variable d'environnement nécessaire
 
-To learn more about Next.js, take a look at the following resources:
+## Auto-hébergement
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+npm start
+# ou avec Docker / PM2 / n'importe quel serveur Node.js
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Aucune base de données, aucun service externe requis.
 
-## Deploy on Vercel
+## Licence
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
+# whiteboards
