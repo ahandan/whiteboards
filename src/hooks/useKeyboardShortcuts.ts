@@ -30,7 +30,8 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
         e.preventDefault();
         handlers.onCopy();
       } else if (ctrl && e.key === 'v') {
-        e.preventDefault();
+        // Don't preventDefault — let the browser paste event fire first
+        // so clipboard images can be read. onPaste handles fabric object paste.
         handlers.onPaste();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();

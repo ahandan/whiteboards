@@ -281,6 +281,19 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
     exportPng(c.toCanvasElement(), "tableau.png");
   }, [fabricRef]);
 
+  const addImageFromDataUrl = useCallback((dataUrl: string) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = fabricRef.current; if (!c) return;
+      const fi = new fabric.FabricImage(img);
+      fi.scale(Math.min(W * 0.5 / img.width, H * 0.5 / img.height, 1));
+      fi.set({ left: 100, top: 100 });
+      c.add(fi); c.setActiveObject(fi); c.requestRenderAll();
+      pushHistory(); updateThumbnail(); setActiveTool("select");
+    };
+    img.src = dataUrl;
+  }, [fabricRef, pushHistory, updateThumbnail]);
+
   const handleImageUpload = useCallback(() => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/png,image/jpeg,image/webp";
@@ -288,22 +301,28 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
       const file = input.files?.[0]; if (!file) return;
       if (file.size > 10 * 1024 * 1024) { alert("Image trop grande (max 10 Mo)"); return; }
       const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const c = fabricRef.current; if (!c) return;
-          const fi = new fabric.FabricImage(img);
-          fi.scale(Math.min(W * 0.5 / img.width, H * 0.5 / img.height, 1));
-          fi.set({ left: 100, top: 100 });
-          c.add(fi); c.setActiveObject(fi); c.requestRenderAll();
-          pushHistory(); updateThumbnail(); setActiveTool("select");
-        };
-        img.src = reader.result as string;
-      };
+      reader.onload = () => addImageFromDataUrl(reader.result as string);
       reader.readAsDataURL(file);
     };
     input.click();
-  }, [fabricRef, pushHistory, updateThumbnail]);
+  }, [addImageFromDataUrl]);
+
+  const handlePasteImage = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (file.size > 10 * 1024 * 1024) { alert("Image trop grande (max 10 Mo)"); return; }
+        const reader = new FileReader();
+        reader.onload = () => addImageFromDataUrl(reader.result as string);
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  }, [addImageFromDataUrl]);
 
   return {
     activeTool, setActiveTool, activeColor, setActiveColor,
@@ -312,6 +331,6 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
     initHistory, applyTool, pushHistory, updateThumbnail,
     handleUndo, handleRedo, handleCopy, handlePaste, handleDelete, handleSelectAll,
     switchToPage, handleAddPage, handleDeletePage, handleDuplicatePage,
-    handleNew, handleSave, handleOpen, handleExportPdf, handleExportPng, handleImageUpload,
+    handleNew, handleSave, handleOpen, handleExportPdf, handleExportPng, handleImageUpload, handlePasteImage,
   };
 }

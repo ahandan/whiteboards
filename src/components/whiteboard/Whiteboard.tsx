@@ -72,6 +72,13 @@ export default function Whiteboard() {
     onDelete: st.handleDelete, onSelectAll: st.handleSelectAll,
   });
 
+  // Paste images from clipboard
+  useEffect(() => {
+    const handler = (e: ClipboardEvent) => st.handlePasteImage(e);
+    window.addEventListener('paste', handler);
+    return () => window.removeEventListener('paste', handler);
+  }, [st.handlePasteImage]);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-100">
       <TopBar onNew={st.handleNew} onOpen={st.handleOpen} onSave={st.handleSave}
