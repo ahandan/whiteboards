@@ -130,25 +130,75 @@ export function setupLaser(
   canvas: fabric.Canvas,
   laserDotsRef: React.RefObject<fabric.FabricObject[]>,
 ) {
-  canvas.on('mouse:move', (opt) => {
-    const pointer = canvas.getScenePoint(opt.e);
-    const dot = new fabric.Circle({
-      left: pointer.x - 8, top: pointer.y - 8,
-      radius: 8,
-      fill: 'rgba(255,0,0,0.8)',
-      stroke: 'rgba(255,0,0,0.4)',
-      strokeWidth: 4,
-      selectable: false, evented: false,
-      excludeFromExport: true,
+  const o = { selectable: false, evented: false, excludeFromExport: true } as const;
+
+  // Single cursor dot
+  const dot = new fabric.Circle({
+    radius: 6, fill: 'red', opacity: 0.9, ...o,
+  });
+  canvas.add(dot);
+  laserDotsRef.current.push(dot);
+
+  // Trail segments — small line pieces that fade individually
+  let isDown = false;
+  let lastPt: { x: number; y: number } | null = null;
+
+  const addSegment = (x1: number, y1: number, x2: number, y2: number) => {
+    const seg = new fabric.Line([x1, y1, x2, y2], {
+      stroke: 'red', strokeWidth: 3, opacity: 0.7,
+      strokeLineCap: 'round', ...o,
     });
-    canvas.add(dot);
-    laserDotsRef.current.push(dot);
-    setTimeout(() => {
-      canvas.remove(dot);
-      const idx = laserDotsRef.current.indexOf(dot);
-      if (idx >= 0) laserDotsRef.current.splice(idx, 1);
-      canvas.requestRenderAll();
-    }, 1500);
+    canvas.add(seg);
+
+    // Fade and remove after 600ms
+    let op = 0.7;
+    const t = setInterval(() => {
+      op -= 0.07;
+      if (op <= 0) {
+        clearInterval(t);
+        canvas.remove(seg);
+      } else {
+        seg.set({ opacity: op });
+      }
+    }, 40);
+  };
+
+  canvas.on('mouse:down', (opt) => {
+    isDown = true;
+    const p = canvas.getScenePoint(opt.e);
+    lastPt = { x: p.x, y: p.y };
+    dot.set({ left: p.x - 6, top: p.y - 6 });
+    canvas.bringObjectToFront(dot);
+    canvas.requestRenderAll();
+  });
+
+  canvas.on('mouse:move', (opt) => {
+    const p = canvas.getScenePoint(opt.e);
+    dot.set({ left: p.x - 6, top: p.y - 6 });
+    canvas.bringObjectToFront(dot);
+
+    if (isDown && lastPt) {
+      addSegment(lastPt.x, lastPt.y, p.x, p.y);
+      lastPt = { x: p.x, y: p.y };
+    }
+
+    canvas.requestRenderAll();
+  });
+
+  canvas.on('mouse:up', () => {
+    isDown = false;
+    lastPt = null;
+  });
+
+  canvas.on('mouse:out', () => {
+    dot.set({ opacity: 0 });
+    isDown = false;
+    lastPt = null;
+    canvas.requestRenderAll();
+  });
+
+  canvas.on('mouse:over', () => {
+    dot.set({ opacity: 0.9 });
     canvas.requestRenderAll();
   });
 }

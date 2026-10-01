@@ -21,13 +21,7 @@ export default function TopBar({
     <div className="flex items-center h-12 bg-white border-b border-gray-200 px-3 gap-0.5 z-20 select-none">
       {/* Logo */}
       <div className="flex items-center gap-2 mr-4">
-        <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M8 12h8M12 8v8" />
-          </svg>
-        </div>
-        <span className="font-semibold text-sm text-gray-800 hidden sm:block">Tableau</span>
+        <span className="font-semibold text-sm text-gray-700 hidden sm:block">Tableau</span>
       </div>
 
       {/* File actions */}
@@ -68,9 +62,9 @@ function Btn({ label, onClick, disabled, icon: Icon }: {
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600
-        hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200
-        disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+      className="w-9 h-9 flex items-center justify-center rounded-md text-gray-500
+        hover:bg-gray-100 hover:text-gray-700
+        disabled:opacity-25 disabled:cursor-not-allowed"
     >
       <Icon className="w-[18px] h-[18px]" />
     </button>

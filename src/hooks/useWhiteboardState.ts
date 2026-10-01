@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState } from "react";
 import * as fabric from "fabric";
-import { ToolType, StickyColor, WhiteboardDocument, WhiteboardPage } from "@/types/whiteboard";
+import { ToolType, StickyColor, EraserMode, WhiteboardDocument, WhiteboardPage } from "@/types/whiteboard";
 import { serializeDocument, deserializeDocument, downloadFile, openFile } from "@/lib/serialization";
 import { exportPdf } from "@/lib/exportPdf";
 import { exportPng } from "@/lib/exportPng";
@@ -15,6 +15,7 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
   const [activeColor, setActiveColor] = useState("#000000");
   const [activeWidth, setActiveWidth] = useState(4);
   const [activeStickyColor, setActiveStickyColor] = useState<StickyColor>("yellow");
+  const [activeEraserMode, setActiveEraserMode] = useState<EraserMode>("object");
 
   const pagesRef = useRef<WhiteboardPage[]>([{ id: crypto.randomUUID(), canvasJSON: "{}" }]);
   const [activePageIndex, setActivePageIndex] = useState(0);
@@ -81,7 +82,9 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
     const c = fabricRef.current; if (!c) return;
     c.isDrawingMode = false; c.selection = false;
     c.defaultCursor = "default"; c.hoverCursor = "default";
-    c.off("mouse:down"); c.off("mouse:move"); c.off("mouse:up");
+    c.off("mouse:down"); c.off("mouse:move"); c.off("mouse:up"); c.off("mouse:out"); c.off("mouse:over");
+    // Remove transient visual elements (eraser circle, laser dot/segments)
+    c.getObjects().filter((o) => o.excludeFromExport).forEach((o) => c.remove(o));
     const lock = () => c.forEachObject((o) => { o.selectable = false; o.evented = false; });
 
     switch (activeTool) {
@@ -103,20 +106,116 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
         b.color = "rgba(" + r + "," + g + "," + bl + ",0.35)"; b.width = activeWidth;
         c.freeDrawingBrush = b; lock(); break;
       }
-      case "eraser":
-        c.defaultCursor = "crosshair"; c.hoverCursor = "crosshair";
-        c.forEachObject((o) => {
-          const isImage = o instanceof fabric.FabricImage;
-          o.selectable = false;
-          o.evented = !isImage;
-        });
-        c.on("mouse:down", (opt) => {
-          const t = c.findTarget(opt.e);
-          if (t && !(t instanceof fabric.FabricImage)) {
-            c.remove(t); c.requestRenderAll(); pushHistory(); updateThumbnail();
+      case "eraser": {
+        c.defaultCursor = "none"; c.hoverCursor = "none";
+        const ERASER_RADIUS = activeEraserMode === "freehand" ? 18 : 14;
+
+        // Visual eraser cursor circle
+        let eraserCircle: fabric.Circle | null = null;
+        const showEraserAt = (x: number, y: number) => {
+          if (!eraserCircle) {
+            eraserCircle = new fabric.Circle({
+              radius: ERASER_RADIUS,
+              fill: "rgba(0,0,0,0.04)",
+              stroke: "#888",
+              strokeWidth: 1.5,
+              strokeDashArray: activeEraserMode === "freehand" ? [4, 3] : undefined,
+              selectable: false, evented: false, excludeFromExport: true,
+            });
+            c.add(eraserCircle);
           }
+          eraserCircle.set({ left: x - ERASER_RADIUS, top: y - ERASER_RADIUS });
+          c.bringObjectToFront(eraserCircle);
+        };
+        const removeEraserCircle = () => {
+          if (eraserCircle) { c.remove(eraserCircle); eraserCircle = null; }
+        };
+
+        if (activeEraserMode === "clear-all") {
+          const toRemove = c.getObjects().filter((o) => !(o instanceof fabric.FabricImage));
+          if (toRemove.length > 0) {
+            toRemove.forEach((o) => c.remove(o));
+            c.requestRenderAll(); pushHistory(); updateThumbnail();
+          }
+          setActiveTool("select");
+          break;
+        }
+
+        // Track mouse for cursor
+        c.on("mouse:move", (opt) => {
+          const p = c.getScenePoint(opt.e);
+          showEraserAt(p.x, p.y);
+          c.requestRenderAll();
         });
+        c.on("mouse:out", () => {
+          removeEraserCircle();
+          c.requestRenderAll();
+        });
+
+        if (activeEraserMode === "object") {
+          c.forEachObject((o) => {
+            const isImage = o instanceof fabric.FabricImage;
+            o.selectable = false;
+            o.evented = !isImage;
+          });
+          c.on("mouse:down", (opt) => {
+            const t = c.findTarget(opt.e);
+            if (t && !(t instanceof fabric.FabricImage) && t !== eraserCircle) {
+              c.remove(t); c.requestRenderAll(); pushHistory(); updateThumbnail();
+            }
+          });
+        }
+
+        if (activeEraserMode === "freehand") {
+          let isErasing = false;
+          const erased = new Set<fabric.FabricObject>();
+          c.forEachObject((o) => { o.selectable = false; o.evented = false; });
+
+          const hitTest = (px: number, py: number) => {
+            const r = ERASER_RADIUS;
+            c.forEachObject((o) => {
+              if (erased.has(o) || o instanceof fabric.FabricImage || o === eraserCircle || o.excludeFromExport) return;
+              // getCoords returns 4 corner points in scene space
+              const coords = o.getCoords();
+              const xs = coords.map((p) => p.x);
+              const ys = coords.map((p) => p.y);
+              const minX = Math.min(...xs), maxX = Math.max(...xs);
+              const minY = Math.min(...ys), maxY = Math.max(...ys);
+              // Closest point on AABB to eraser center
+              const cx = Math.max(minX, Math.min(px, maxX));
+              const cy = Math.max(minY, Math.min(py, maxY));
+              const dx = px - cx, dy = py - cy;
+              if (dx * dx + dy * dy <= r * r) {
+                erased.add(o);
+                o.set({ opacity: 0.3 });
+              }
+            });
+          };
+
+          c.on("mouse:down", (opt) => {
+            isErasing = true; erased.clear();
+            const p = c.getScenePoint(opt.e);
+            hitTest(p.x, p.y);
+            c.requestRenderAll();
+          });
+          c.on("mouse:move", (opt) => {
+            if (!isErasing) return;
+            const p = c.getScenePoint(opt.e);
+            hitTest(p.x, p.y);
+            c.requestRenderAll();
+          });
+          c.on("mouse:up", () => {
+            isErasing = false;
+            if (erased.size > 0) {
+              erased.forEach((o) => c.remove(o));
+              c.requestRenderAll(); pushHistory(); updateThumbnail();
+            }
+          });
+        }
+
+        // Clean up eraser circle when tool changes (handled by applyTool re-run)
         break;
+      }
       case "line": case "arrow": case "rectangle": case "circle":
         c.defaultCursor = "crosshair"; lock();
         setupShapeDrawing(c, activeTool, activeColor, activeWidth, pushHistory, updateThumbnail, drawingShapeRef, drawStartRef);
@@ -141,7 +240,7 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
       case "laser":
         c.defaultCursor = "none"; lock(); setupLaser(c, laserDotsRef); break;
     }
-  }, [fabricRef, activeTool, activeColor, activeWidth, activeStickyColor, pushHistory, updateThumbnail]);
+  }, [fabricRef, activeTool, activeColor, activeWidth, activeStickyColor, activeEraserMode, pushHistory, updateThumbnail]);
 
   const restoreJSON = useCallback(async (json: string) => {
     const c = fabricRef.current; if (!c) return;
@@ -332,7 +431,7 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
 
   return {
     activeTool, setActiveTool, activeColor, setActiveColor,
-    activeWidth, setActiveWidth, activeStickyColor, setActiveStickyColor,
+    activeWidth, setActiveWidth, activeStickyColor, setActiveStickyColor, activeEraserMode, setActiveEraserMode,
     activePageIndex, pageCount, thumbnails, canUndo, canRedo, isDirtyRef,
     initHistory, applyTool, pushHistory, updateThumbnail,
     handleUndo, handleRedo, handleCopy, handlePaste, handleDelete, handleSelectAll,

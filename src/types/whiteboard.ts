@@ -12,6 +12,8 @@ export type ToolType =
   | 'image'
   | 'laser';
 
+export type EraserMode = 'object' | 'freehand' | 'clear-all';
+
 export type PenColor = string;
 
 export type PenWidth = number;

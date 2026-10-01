@@ -48,7 +48,7 @@ export default function Whiteboard() {
   }, []);
 
   // Tool settings
-  useEffect(() => { st.applyTool(); }, [st.activeTool, st.activeColor, st.activeWidth, st.activeStickyColor]);
+  useEffect(() => { st.applyTool(); }, [st.activeTool, st.activeColor, st.activeWidth, st.activeStickyColor, st.activeEraserMode]);
 
   // beforeunload
   useEffect(() => {
@@ -90,13 +90,15 @@ export default function Whiteboard() {
         <div className="p-2 overflow-visible z-30">
           <Toolbar activeTool={st.activeTool} activeColor={st.activeColor}
             activeWidth={st.activeWidth} activeStickyColor={st.activeStickyColor}
+            activeEraserMode={st.activeEraserMode}
             onToolChange={st.setActiveTool} onColorChange={st.setActiveColor}
-            onWidthChange={st.setActiveWidth} onStickyColorChange={st.setActiveStickyColor} />
+            onWidthChange={st.setActiveWidth} onStickyColorChange={st.setActiveStickyColor}
+            onEraserModeChange={st.setActiveEraserMode} />
         </div>
         <div ref={containerRef}
-          className="flex-1 flex items-center justify-center overflow-hidden bg-gray-300"
+          className="flex-1 flex items-center justify-center overflow-hidden bg-gray-200"
           style={{ touchAction: 'none', padding: 32 }}>
-          <canvas ref={canvasRef} className="rounded-lg shadow-xl" />
+          <canvas ref={canvasRef} className="rounded shadow-sm" />
         </div>
       </div>
       <PageNavigator pageCount={st.pageCount} activePageIndex={st.activePageIndex}
