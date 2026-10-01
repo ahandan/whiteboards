@@ -24,18 +24,16 @@ export default function PageNavigator({
   return (
     <div className="flex items-end gap-3 bg-gray-200 border-t border-gray-300 pl-5 pr-4 pt-1.5 pb-0 z-20 select-none">
       {/* Navigation */}
-      <div className="flex items-end gap-0">
-        <div className="pb-1.5">
-          <NavBtn
-            label="Page précédente"
-            onClick={() => onPageChange(Math.max(0, activePageIndex - 1))}
-            disabled={activePageIndex === 0}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" {...sv}><polyline points="15 18 9 12 15 6" /></svg>
-          </NavBtn>
-        </div>
+      <div className="flex items-center gap-0">
+        <NavBtn
+          label="Page précédente"
+          onClick={() => onPageChange(Math.max(0, activePageIndex - 1))}
+          disabled={activePageIndex === 0}
+        >
+          <svg className="w-8 h-8" viewBox="0 0 24 24" {...sv}><polyline points="15 18 9 12 15 6" /></svg>
+        </NavBtn>
 
-        <div className="flex gap-0 overflow-x-auto px-1">
+        <div className="flex gap-0 overflow-x-auto px-1 items-end">
           {thumbnails.map((thumb, i) => (
             <button
               key={i}
@@ -63,15 +61,13 @@ export default function PageNavigator({
           ))}
         </div>
 
-        <div className="pb-1.5">
-          <NavBtn
-            label="Page suivante"
-            onClick={() => onPageChange(Math.min(pageCount - 1, activePageIndex + 1))}
-            disabled={activePageIndex === pageCount - 1}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" {...sv}><polyline points="9 18 15 12 9 6" /></svg>
-          </NavBtn>
-        </div>
+        <NavBtn
+          label="Page suivante"
+          onClick={() => onPageChange(Math.min(pageCount - 1, activePageIndex + 1))}
+          disabled={activePageIndex === pageCount - 1}
+        >
+          <svg className="w-8 h-8" viewBox="0 0 24 24" {...sv}><polyline points="9 18 15 12 9 6" /></svg>
+        </NavBtn>
       </div>
 
       {/* Divider */}

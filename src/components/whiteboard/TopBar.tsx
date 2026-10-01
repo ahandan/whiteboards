@@ -1,5 +1,7 @@
 'use client';
 
+import ClockTimer from './ClockTimer';
+
 interface TopBarProps {
   onNew: () => void;
   onOpen: () => void;
@@ -42,6 +44,12 @@ export default function TopBar({
 
       <Btn label="Annuler (Ctrl+Z)" onClick={onUndo} disabled={!canUndo} icon={IconUndo} />
       <Btn label="Rétablir (Ctrl+Y)" onClick={onRedo} disabled={!canRedo} icon={IconRedo} />
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Clock & Timer */}
+      <ClockTimer />
     </div>
   );
 }
