@@ -79,9 +79,14 @@ export default function PageNavigator({
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 pb-1.5">
-        <NavBtn label="Ajouter une page" onClick={onAddPage}>
-          <svg className="w-4 h-4" viewBox="0 0 24 24" {...sv}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-        </NavBtn>
+        <button
+          aria-label="Ajouter une page"
+          title="Ajouter une page"
+          onClick={onAddPage}
+          className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 hover:border-gray-400"
+        >
+          <svg className="w-8 h-8" viewBox="0 0 24 24" {...sv}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+        </button>
         <NavBtn label="Dupliquer la page" onClick={onDuplicatePage}>
           <svg className="w-4 h-4" viewBox="0 0 24 24" {...sv}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
         </NavBtn>
