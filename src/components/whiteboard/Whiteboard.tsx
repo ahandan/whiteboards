@@ -83,15 +83,15 @@ export default function Whiteboard() {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-100">
       <TopBar onNew={st.handleNew} onOpen={st.handleOpen} onSave={st.handleSave}
         onExportPdf={st.handleExportPdf} onExportPng={st.handleExportPng}
+        onImageUpload={st.handleImageUpload}
         onUndo={st.handleUndo} onRedo={st.handleRedo}
         canUndo={st.canUndo} canRedo={st.canRedo} />
       <div className="flex flex-1 overflow-hidden">
-        <div className="p-2 overflow-y-auto">
+        <div className="p-2 overflow-visible z-30">
           <Toolbar activeTool={st.activeTool} activeColor={st.activeColor}
             activeWidth={st.activeWidth} activeStickyColor={st.activeStickyColor}
             onToolChange={st.setActiveTool} onColorChange={st.setActiveColor}
-            onWidthChange={st.setActiveWidth} onStickyColorChange={st.setActiveStickyColor}
-            onImageUpload={st.handleImageUpload} />
+            onWidthChange={st.setActiveWidth} onStickyColorChange={st.setActiveStickyColor} />
         </div>
         <div ref={containerRef}
           className="flex-1 flex items-center justify-center overflow-hidden bg-gray-300"

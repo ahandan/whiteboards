@@ -105,10 +105,16 @@ export function useWhiteboardState(fabricRef: React.RefObject<fabric.Canvas | nu
       }
       case "eraser":
         c.defaultCursor = "crosshair"; c.hoverCursor = "crosshair";
-        c.forEachObject((o) => { o.selectable = false; o.evented = true; });
+        c.forEachObject((o) => {
+          const isImage = o instanceof fabric.FabricImage;
+          o.selectable = false;
+          o.evented = !isImage;
+        });
         c.on("mouse:down", (opt) => {
           const t = c.findTarget(opt.e);
-          if (t) { c.remove(t); c.requestRenderAll(); pushHistory(); updateThumbnail(); }
+          if (t && !(t instanceof fabric.FabricImage)) {
+            c.remove(t); c.requestRenderAll(); pushHistory(); updateThumbnail();
+          }
         });
         break;
       case "line": case "arrow": case "rectangle": case "circle":

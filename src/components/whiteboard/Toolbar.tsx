@@ -26,7 +26,6 @@ const TOOLS: { type: ToolType; label: string; icon: React.ReactNode }[] = [
   { type: 'circle', label: 'Cercle', icon: <I><circle cx="12" cy="12" r="10" /></I> },
   { type: 'text', label: 'Texte', icon: <I><polyline points="4 7 4 4 20 4 20 7" /><line x1="9.5" y1="20" x2="14.5" y2="20" /><line x1="12" y1="4" x2="12" y2="20" /></I> },
   { type: 'sticky', label: 'Note', icon: <I><path d="M15.5 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8.5L15.5 3z" /><polyline points="14 3 14 9 21 9" /></I> },
-  { type: 'image', label: 'Image', icon: <I><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></I> },
   { type: 'laser', label: 'Laser', icon: <I><circle cx="12" cy="12" r="3" fill="currentColor" /><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="11" /></I> },
 ];
 
@@ -39,7 +38,6 @@ interface ToolbarProps {
   onColorChange: (color: string) => void;
   onWidthChange: (width: number) => void;
   onStickyColorChange: (color: StickyColor) => void;
-  onImageUpload: () => void;
 }
 
 export default function Toolbar({
@@ -51,107 +49,121 @@ export default function Toolbar({
   onColorChange,
   onWidthChange,
   onStickyColorChange,
-  onImageUpload,
 }: ToolbarProps) {
   const showColorPicker = ['pen', 'highlighter', 'line', 'arrow', 'rectangle', 'circle', 'text'].includes(activeTool);
   const showWidthPicker = ['pen', 'highlighter'].includes(activeTool);
   const showStickyColors = activeTool === 'sticky';
   const widths = activeTool === 'highlighter' ? HIGHLIGHTER_WIDTHS : PEN_WIDTHS;
 
+  const showSubPanel = showColorPicker || showWidthPicker || showStickyColors;
+
+  // Find the index of the active tool to position the sub-panel
+  const activeToolIndex = TOOLS.findIndex((t) => t.type === activeTool);
+
   return (
-    <div className="flex flex-col items-center gap-0.5 bg-white rounded-2xl shadow-lg p-1.5 z-20 border border-gray-100">
-      {TOOLS.map((tool) => (
-        <button
-          key={tool.type}
-          aria-label={tool.label}
-          title={tool.label}
-          onClick={() => {
-            if (tool.type === 'image') {
-              onToolChange('select');
-              onImageUpload();
-            } else {
-              onToolChange(tool.type);
-            }
-          }}
-          className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all
-            ${activeTool === tool.type
-              ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`}
+    <div className="relative">
+      {/* Main toolbar */}
+      <div className="flex flex-col items-center gap-0.5 bg-white rounded-2xl shadow-lg p-1.5 z-20 border border-gray-100">
+        {TOOLS.map((tool) => (
+          <button
+            key={tool.type}
+            aria-label={tool.label}
+            title={tool.label}
+            onClick={() => onToolChange(tool.type)}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all
+              ${activeTool === tool.type
+                ? 'bg-indigo-50 text-indigo-600 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`}
+          >
+            {tool.icon}
+          </button>
+        ))}
+      </div>
+
+      {/* Sub-panel — slides out to the right */}
+      {showSubPanel && (
+        <div
+          className="absolute left-full ml-3 bg-white rounded-2xl shadow-xl border border-gray-200/80 p-3 z-50
+            transition-all duration-200 ease-out animate-[slideIn_200ms_ease-out]"
+          style={{ top: activeToolIndex * 42 + 6 }}
         >
-          {tool.icon}
-        </button>
-      ))}
+          <div className="flex items-start gap-3">
+            {/* Colors */}
+            {showColorPicker && (
+              <div className="flex flex-col gap-3">
+                {PEN_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    aria-label={`Couleur ${color}`}
+                    title={color}
+                    onClick={() => onColorChange(color)}
+                    className={`w-8 h-8 rounded-full transition-all duration-150
+                      ${activeColor === color
+                        ? 'ring-2 ring-indigo-400 ring-offset-3 scale-110'
+                        : 'hover:scale-115'}`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+                <div className="relative">
+                  <div
+                    className={`w-8 h-8 rounded-full border-2 border-dashed border-gray-300 overflow-hidden
+                      ${!PEN_COLORS.includes(activeColor) ? 'ring-2 ring-indigo-400 ring-offset-3' : ''}`}
+                    style={{ backgroundColor: activeColor }}
+                  />
+                  <input
+                    type="color"
+                    value={activeColor}
+                    onChange={(e) => onColorChange(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    aria-label="Couleur personnalisée"
+                    title="Couleur personnalisée"
+                  />
+                </div>
+              </div>
+            )}
 
-      {showColorPicker && (
-        <div className="flex flex-col gap-1.5 mt-1.5 pt-2 border-t border-gray-100">
-          {PEN_COLORS.map((color) => (
-            <button
-              key={color}
-              aria-label={`Couleur ${color}`}
-              title={color}
-              onClick={() => onColorChange(color)}
-              className={`w-6 h-6 rounded-full mx-auto transition-all
-                ${activeColor === color
-                  ? 'ring-2 ring-indigo-400 ring-offset-2 scale-110'
-                  : 'hover:scale-110'}`}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-          <div className="relative mx-auto">
-            <div
-              className={`w-6 h-6 rounded-full border-2 border-dashed border-gray-300 overflow-hidden
-                ${!PEN_COLORS.includes(activeColor) ? 'ring-2 ring-indigo-400 ring-offset-2' : ''}`}
-              style={{ backgroundColor: activeColor }}
-            />
-            <input
-              type="color"
-              value={activeColor}
-              onChange={(e) => onColorChange(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              aria-label="Couleur personnalisée"
-              title="Couleur personnalisée"
-            />
+            {/* Widths */}
+            {showWidthPicker && (
+              <div className="flex flex-col gap-2">
+                {widths.map((w) => (
+                  <button
+                    key={w}
+                    aria-label={`Épaisseur ${w}`}
+                    title={`Épaisseur ${w}`}
+                    onClick={() => onWidthChange(w)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150
+                      ${activeWidth === w
+                        ? 'bg-indigo-50 text-indigo-600'
+                        : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
+                  >
+                    <div
+                      className="rounded-full bg-current"
+                      style={{ width: Math.min(w * 1.2, 20), height: Math.min(w * 1.2, 20) }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Sticky colors */}
+            {showStickyColors && (
+              <div className="flex flex-col gap-3">
+                {(Object.keys(STICKY_COLORS) as StickyColor[]).map((color) => (
+                  <button
+                    key={color}
+                    aria-label={`Note ${color}`}
+                    title={color}
+                    onClick={() => onStickyColorChange(color)}
+                    className={`w-8 h-8 rounded-lg transition-all duration-150
+                      ${activeStickyColor === color
+                        ? 'ring-2 ring-indigo-400 ring-offset-3 scale-110'
+                        : 'hover:scale-115'}`}
+                    style={{ backgroundColor: STICKY_COLORS[color] }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {showWidthPicker && (
-        <div className="flex flex-col gap-1 mt-1.5 pt-2 border-t border-gray-100">
-          {widths.map((w) => (
-            <button
-              key={w}
-              aria-label={`Épaisseur ${w}`}
-              title={`Épaisseur ${w}`}
-              onClick={() => onWidthChange(w)}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg mx-auto transition-all
-                ${activeWidth === w
-                  ? 'bg-indigo-50 text-indigo-600'
-                  : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
-            >
-              <div
-                className="rounded-full bg-current"
-                style={{ width: Math.min(w * 1.2, 20), height: Math.min(w * 1.2, 20) }}
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {showStickyColors && (
-        <div className="flex flex-col gap-1.5 mt-1.5 pt-2 border-t border-gray-100">
-          {(Object.keys(STICKY_COLORS) as StickyColor[]).map((color) => (
-            <button
-              key={color}
-              aria-label={`Note ${color}`}
-              title={color}
-              onClick={() => onStickyColorChange(color)}
-              className={`w-6 h-6 rounded-md mx-auto transition-all
-                ${activeStickyColor === color
-                  ? 'ring-2 ring-indigo-400 ring-offset-2 scale-110'
-                  : 'hover:scale-110'}`}
-              style={{ backgroundColor: STICKY_COLORS[color] }}
-            />
-          ))}
         </div>
       )}
     </div>

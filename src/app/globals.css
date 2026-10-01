@@ -13,3 +13,17 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
 }
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.95);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}

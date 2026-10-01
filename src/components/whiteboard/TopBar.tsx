@@ -6,6 +6,7 @@ interface TopBarProps {
   onSave: () => void;
   onExportPdf: () => void;
   onExportPng: () => void;
+  onImageUpload: () => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -13,7 +14,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({
-  onNew, onOpen, onSave, onExportPdf, onExportPng,
+  onNew, onOpen, onSave, onExportPdf, onExportPng, onImageUpload,
   onUndo, onRedo, canUndo, canRedo,
 }: TopBarProps) {
   return (
@@ -36,8 +37,12 @@ export default function TopBar({
 
       <Divider />
 
+      <Btn label="Importer une image" onClick={onImageUpload} icon={IconImportImage} />
+
+      <Divider />
+
       <Btn label="Exporter PDF" onClick={onExportPdf} icon={IconPdf} />
-      <Btn label="Exporter PNG" onClick={onExportPng} icon={IconImage} />
+      <Btn label="Exporter PNG" onClick={onExportPng} icon={IconExport} />
 
       <Divider />
 
@@ -88,8 +93,11 @@ function IconSave({ className }: { className?: string }) {
 function IconPdf({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" {...s}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M9 15v-2h1.5a1.5 1.5 0 010 3H9" /></svg>;
 }
-function IconImage({ className }: { className?: string }) {
+function IconImportImage({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" {...s}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>;
+}
+function IconExport({ className }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 24 24" {...s}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>;
 }
 function IconUndo({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" {...s}><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 102.13-9.36L1 10" /></svg>;
